@@ -1,5 +1,5 @@
 # Importa as classes criadas no arquivo models.py
-from models import Animal, Borboleta
+from models import Animal, Borboleta, Gato, Teste
 
 # Cria um objeto do tipo Animal
 a1 = Animal()
@@ -30,3 +30,25 @@ b1.voar()
 b1.morfar()
 # E acessar os mesmos atributos
 print(f"A borboleta tem {b1.pernas} pernas")
+
+
+# Cria um animal do tipo gato com dados fornecidos pelo usuário
+esp = input("Espécie: ")
+voa = bool(input("Voa (True/False): "))
+pernas = int(input("Qtde de pernas: "))
+# Cria o objeto
+gato = Gato(esp, voa, pernas)
+# Chama um método do objeto
+print(gato.rugir())
+
+
+# Cria um objeto do tipo teste
+obj = Teste()
+# Utiliza o método com parâmetros opcionais com 2 parâmetros só
+obj.parametros_opcionais(10, 20)
+# Método com quantos parâmetros desejar...
+print(obj.parametros_infinitos(10,1,5,3,1))
+# inclusive nenhum
+print(obj.parametros_infinitos())
+# Método com parâmetros nomeados
+obj.parametros_infinitos_2(nome="Rafael", curso="INFO", disc="POO", alunos=32)
