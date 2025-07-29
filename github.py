@@ -13,7 +13,7 @@ os.system(comando)
 print("\nAdicionando mudanças e realizando commit...")
 comando = "git add *"
 os.system(comando)
-comando = "git commit -m \"{msg_commit}\""
+comando = f"git commit -m \"{msg_commit}\""
 os.system(comando)
 
 print("\nEnviando ao GitHub. Abra a outra janela para se autenticar...")
