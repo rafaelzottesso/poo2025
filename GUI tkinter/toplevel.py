@@ -12,15 +12,17 @@ menubar = tk.Menu(janela, font=("Arial", 16))
 # Criar o submenu "Arquivo"
 menu_arquivo = tk.Menu(menubar, tearoff=False)  # tearoff=False remove linha pontilhada
 # add_command adiciona itens ao menu com um rótulo e uma ação (command igual a um botão)
-menu_arquivo.add_command(label="Novo", command=lambda: print("Novo arquivo"))
-menu_arquivo.add_command(label="Abrir…", command=lambda: print("Abrir arquivo"))
+menu_arquivo.add_command(label="Estudante", command=lambda: print("Exibir tela do estudante"))
+menu_arquivo.add_command(label="Tipo de protocolo", command=lambda: print("Exibir tela do tipo de protocolo"))
 # Adiciona uma linha separadora entre os itens do menu
+menu_arquivo.add_separator()
+menu_arquivo.add_command(label="Protocolos", command=lambda: print("Exibir tela de protocolos"))
 menu_arquivo.add_separator()
 # submenu Sair que fecha a janela principal
 menu_arquivo.add_command(label="Sair", command=janela.quit)
 
-# Adiciona o submenu "Arquivo" à barra de menu principal
-menubar.add_cascade(label="Arquivo", menu=menu_arquivo)
+# Adiciona o submenu "Cadastros" à barra de menu principal
+menubar.add_cascade(label="Cadastros", menu=menu_arquivo)
 
 
 # Criar o submenu "Ajuda"
