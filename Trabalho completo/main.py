@@ -1,6 +1,6 @@
 import sys
 import os
-from classes import Estudante
+from classes import Estudante, TipoProtocolo
 import tkinter as tk
 from tkinter import messagebox
 
@@ -31,6 +31,13 @@ def cad_estudante():
     # Abre a tela de estudantes
     frame_cad_estudante.tkraise()
 
+# Função que mostra o frame de cadastro de tipo de protocolo
+def cad_tipo_protocolo():
+    # Inicializa a lista ao abrir a tela
+    listar_tipo_protocolo()
+    # Abre a tela de tipo de protocolo
+    frame_cad_tipo_protocolo.tkraise()
+
 # Janela principal com tamanho e título
 janela = tk.Tk()
 janela.title("Menu bar exemplo")
@@ -53,7 +60,7 @@ menubar.add_cascade(label="Arquivo",menu=menu_arquivo)
 # Cria um novo menu com submenus
 menu_cadastro=tk.Menu(menubar,tearoff=False)
 menu_cadastro.add_command(label="Estudante",command=cad_estudante)
-menu_cadastro.add_command(label="Tipo de protocolo",command=clicar)
+menu_cadastro.add_command(label="Tipo de protocolo",command=cad_tipo_protocolo)
 menu_cadastro.add_separator()
 menu_cadastro.add_command(label="Protocolo",command=clicar)
 menubar.add_cascade(label="Cadastro",menu=menu_cadastro)
@@ -203,6 +210,98 @@ btn_excluir.grid(row=6, column=0, pady=5, sticky="ew")
 btn_listar = tk.Button(frame_cad_estudante, text="Listar", command=listar_estudantes)
 btn_listar.grid(row=6, column=1, pady=5, sticky="ew")
 
+# Frame de cadastro de tipo de protocolo
+frame_cad_tipo_protocolo = tk.Frame(janela, padx=20, pady=10)
+
+# Título
+lb_titulo_tp = tk.Label(frame_cad_tipo_protocolo, text="Cadastro de Tipo de Protocolo", font=FONT_TITULO)
+lb_titulo_tp.grid(row=0, column=0, columnspan=2, pady=10)
+
+# Nome
+lb_nome_tp = tk.Label(frame_cad_tipo_protocolo, text="Nome:", font=FONT_TEXTO)
+lb_nome_tp.grid(row=1, column=0, sticky="e", padx=5, pady=5)
+entry_nome_tp = tk.Entry(frame_cad_tipo_protocolo, width=30)
+entry_nome_tp.grid(row=1, column=1, padx=5, pady=5)
+
+# Listbox para exibir tipos de protocolo
+listbox_tp = tk.Listbox(frame_cad_tipo_protocolo, width=50, height=8)
+listbox_tp.grid(row=2, column=0, columnspan=2, pady=10)
+
+# Funções para manipular tipos de protocolo (inserir, editar, excluir, listar)
+def listar_tipo_protocolo():
+    listbox_tp.delete(0, tk.END)
+    for tp in TipoProtocolo.select():
+        listbox_tp.insert(tk.END, f"{tp.id} - {tp.nome}")
+
+def cadastrar_tipo_protocolo():
+    nome = entry_nome_tp.get().strip()
+    if not nome:
+        messagebox.showwarning("Atenção", "Nome é obrigatório!")
+        return
+    try:
+        TipoProtocolo.create(nome=nome)
+        messagebox.showinfo("Sucesso", "Tipo de Protocolo cadastrado!")
+        listar_tipo_protocolo()
+        entry_nome_tp.delete(0, tk.END)
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao cadastrar: {e}")
+
+def excluir_tipo_protocolo():
+    selecionado = listbox_tp.curselection()
+    if not selecionado:
+        messagebox.showwarning("Atenção", "Selecione um tipo para excluir.")
+        return
+    item = listbox_tp.get(selecionado[0])
+    tp_id = item.split(" - ")[0]
+    try:
+        tp = TipoProtocolo.get_by_id(tp_id)
+        tp.delete_instance()
+        messagebox.showinfo("Sucesso", "Tipo de Protocolo excluído!")
+        listar_tipo_protocolo()
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao excluir: {e}")
+
+def editar_tipo_protocolo():
+    selecionado = listbox_tp.curselection()
+    if not selecionado:
+        messagebox.showwarning("Atenção", "Selecione um tipo para editar.")
+        return
+    item = listbox_tp.get(selecionado[0])
+    tp_id = item.split(" - ")[0]
+    try:
+        tp = TipoProtocolo.get_by_id(tp_id)
+        novo_nome = entry_nome_tp.get().strip()
+        if not novo_nome:
+            messagebox.showwarning("Atenção", "Nome é obrigatório!")
+            return
+        tp.nome = novo_nome
+        tp.save()
+        messagebox.showinfo("Sucesso", "Tipo de Protocolo editado!")
+        listar_tipo_protocolo()
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao editar: {e}")
+
+def preencher_campos_tp(event):
+    selecionado = listbox_tp.curselection()
+    if not selecionado:
+        return
+    item = listbox_tp.get(selecionado[0])
+    partes = item.split(" - ")
+    entry_nome_tp.delete(0, tk.END)
+    entry_nome_tp.insert(0, partes[1])
+
+listbox_tp.bind('<<ListboxSelect>>', preencher_campos_tp)
+
+# Botões
+btn_cadastrar_tp = tk.Button(frame_cad_tipo_protocolo, text="Cadastrar", command=cadastrar_tipo_protocolo)
+btn_cadastrar_tp.grid(row=3, column=0, pady=5, sticky="ew")
+btn_editar_tp = tk.Button(frame_cad_tipo_protocolo, text="Editar", command=editar_tipo_protocolo)
+btn_editar_tp.grid(row=3, column=1, pady=5, sticky="ew")
+btn_excluir_tp = tk.Button(frame_cad_tipo_protocolo, text="Excluir", command=excluir_tipo_protocolo)
+btn_excluir_tp.grid(row=4, column=0, pady=5, sticky="ew")
+btn_listar_tp = tk.Button(frame_cad_tipo_protocolo, text="Listar", command=listar_tipo_protocolo)
+btn_listar_tp.grid(row=4, column=1, pady=5, sticky="ew")
+
 # Coloca os frames na janela principal
 # Esses frames ficam todos sobrepostos na mesma posição
 # porque o tkraise irá escolher quem será exibido a cada vez
@@ -212,6 +311,7 @@ btn_listar.grid(row=6, column=1, pady=5, sticky="ew")
 frame_inicio.grid(row=0,column=0,sticky="nesw")
 frame_sobre.grid(row=0,column=0,sticky="nesw")
 frame_cad_estudante.grid(row=0,column=0,sticky="nesw")
+frame_cad_tipo_protocolo.grid(row=0,column=0,sticky="nesw")
 
 
 # Define qual frame vai aparecer ao iniciar o programa principal

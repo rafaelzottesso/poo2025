@@ -33,14 +33,14 @@ def salvar_protocolo():
 # Botão para selecionar o estudante com ID 2 no combobox
 def selecionar_estudante_id_2():
     # Faz um loop na lista de estudantes para encontrar o que tem ID 2
-    for i, estudante in enumerate(estudantes):
-        if estudante.endswith("(2)"):
+    for i in range(0, len(estudantes)):
+        if estudantes[i].endswith("(2)"):
             combobox_estudante.current(i)
             break   
 
     # Faz um loop na lista de tipos de protocolo para encontrar o que tem ID 2
-    for i, tipo in enumerate(tipos_protocolo):
-        if tipo.endswith("(2)"):
+    for i in range(0, len(tipos_protocolo)):
+        if tipos_protocolo[i].endswith("(2)"):
             combobox_tipo.current(i)
             break
 
@@ -57,6 +57,13 @@ label_estudante.grid(row=0, column=0, padx=10, pady=10, sticky="e")
 # Criar um combobox para selecionar o estudante
 # Já lista todos os estudantes cadastrados no banco de dados e transforma em uma lista de strings
 # Que é o que o combobox espera
+# lista_estudantes = ["Rafael - 3", "Maria - 1", "José - 2"]
+# lista = Estudante.select()
+# lista_estudantes = []
+# for estudante in lista:
+#     str_estudante = f"{estudante.nome} - {estudante.id}"
+#     lista_estudantes.append(str_estudante)
+
 estudantes = [f"{est.nome} ({est.id})" for est in Estudante.select()]
 combobox_estudante = ttk.Combobox(janela, values=estudantes)
 combobox_estudante.grid(row=0, column=1, padx=10, pady=10, sticky="we")
