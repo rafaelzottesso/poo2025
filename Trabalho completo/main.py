@@ -1,8 +1,8 @@
 import sys
 import os
-from classes import Estudante, TipoProtocolo
+from classes import Estudante, TipoProtocolo, Protocolo
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 
 # Formatação de fonte padrão para usar nos elementos da tela
@@ -38,6 +38,15 @@ def cad_tipo_protocolo():
     # Abre a tela de tipo de protocolo
     frame_cad_tipo_protocolo.tkraise()
 
+# Função que mostra o frame de cadastro de protocolo
+def cad_protocolo():
+    # Carrega os dados nos comboboxes e inicializa a lista
+    carregar_combobox_estudantes()
+    carregar_combobox_tipos_protocolo()
+    listar_protocolos()
+    # Abre a tela de protocolo
+    frame_cad_protocolo.tkraise()
+
 # Janela principal com tamanho e título
 janela = tk.Tk()
 janela.title("Menu bar exemplo")
@@ -62,7 +71,7 @@ menu_cadastro=tk.Menu(menubar,tearoff=False)
 menu_cadastro.add_command(label="Estudante",command=cad_estudante)
 menu_cadastro.add_command(label="Tipo de protocolo",command=cad_tipo_protocolo)
 menu_cadastro.add_separator()
-menu_cadastro.add_command(label="Protocolo",command=clicar)
+menu_cadastro.add_command(label="Protocolo",command=cad_protocolo)
 menubar.add_cascade(label="Cadastro",menu=menu_cadastro)
 
 # Cria um outro menu com submenus
@@ -302,6 +311,211 @@ btn_excluir_tp.grid(row=4, column=0, pady=5, sticky="ew")
 btn_listar_tp = tk.Button(frame_cad_tipo_protocolo, text="Listar", command=listar_tipo_protocolo)
 btn_listar_tp.grid(row=4, column=1, pady=5, sticky="ew")
 
+# Frame de cadastro de protocolo
+frame_cad_protocolo = tk.Frame(janela, padx=20, pady=10)
+
+# Título
+lb_titulo_protocolo = tk.Label(frame_cad_protocolo, text="Cadastro de Protocolos", font=FONT_TITULO)
+lb_titulo_protocolo.grid(row=0, column=0, columnspan=2, pady=10)
+
+# Estudante (Combobox)
+lb_estudante = tk.Label(frame_cad_protocolo, text="Estudante:", font=FONT_TEXTO)
+lb_estudante.grid(row=1, column=0, sticky="e", padx=5, pady=5)
+combo_estudante = ttk.Combobox(frame_cad_protocolo, width=40, state="readonly")
+combo_estudante.grid(row=1, column=1, padx=5, pady=5)
+
+# Tipo de Protocolo (Combobox)
+lb_tipo_protocolo = tk.Label(frame_cad_protocolo, text="Tipo de Protocolo:", font=FONT_TEXTO)
+lb_tipo_protocolo.grid(row=2, column=0, sticky="e", padx=5, pady=5)
+combo_tipo_protocolo = ttk.Combobox(frame_cad_protocolo, width=40, state="readonly")
+combo_tipo_protocolo.grid(row=2, column=1, padx=5, pady=5)
+
+# Justificativa (Text)
+lb_justificativa = tk.Label(frame_cad_protocolo, text="Justificativa:", font=FONT_TEXTO)
+lb_justificativa.grid(row=3, column=0, sticky="ne", padx=5, pady=5)
+text_justificativa = tk.Text(frame_cad_protocolo, width=40, height=5)
+text_justificativa.grid(row=3, column=1, padx=5, pady=5)
+
+# Listbox para exibir protocolos
+listbox_protocolos = tk.Listbox(frame_cad_protocolo, width=70, height=8)
+listbox_protocolos.grid(row=4, column=0, columnspan=2, pady=10)
+
+# Dicionários para mapear valores dos comboboxes
+estudantes_dict = {}
+tipos_protocolo_dict = {}
+
+# Variável global para armazenar o protocolo sendo editado
+protocolo_editando = None
+
+# Funções para carregar os comboboxes
+def carregar_combobox_estudantes():
+    global estudantes_dict
+    estudantes = list(Estudante.select())
+    estudantes_lista = [f"{est.nome} - {est.matricula}" for est in estudantes]
+    combo_estudante['values'] = estudantes_lista
+    estudantes_dict = {f"{est.nome} - {est.matricula}": est.id for est in estudantes}
+
+def carregar_combobox_tipos_protocolo():
+    global tipos_protocolo_dict
+    tipos = list(TipoProtocolo.select())
+    tipos_lista = [tp.nome for tp in tipos]
+    combo_tipo_protocolo['values'] = tipos_lista
+    tipos_protocolo_dict = {tp.nome: tp.id for tp in tipos}
+
+# Funções para manipular protocolos
+def listar_protocolos():
+    listbox_protocolos.delete(0, tk.END)
+    for protocolo in Protocolo.select().join(Estudante).switch(Protocolo).join(TipoProtocolo):
+        data_formatada = protocolo.data_hora.strftime("%d/%m/%Y %H:%M")
+        listbox_protocolos.insert(tk.END, 
+            f"{protocolo.id} - {protocolo.estudante.nome} - {protocolo.tipo.nome} - {data_formatada}")
+
+def cadastrar_protocolo():
+    global protocolo_editando
+    
+    estudante_selecionado = combo_estudante.get()
+    tipo_selecionado = combo_tipo_protocolo.get()
+    justificativa = text_justificativa.get("1.0", tk.END).strip()
+    
+    if not estudante_selecionado or not tipo_selecionado or not justificativa:
+        messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
+        return
+    
+    try:
+        estudante_id = estudantes_dict[estudante_selecionado]
+        tipo_id = tipos_protocolo_dict[tipo_selecionado]
+        
+        # Sempre criar novo protocolo nesta função
+        Protocolo.create(
+            estudante=estudante_id,
+            tipo=tipo_id,
+            justificativa=justificativa
+        )
+        
+        messagebox.showinfo("Sucesso", "Novo protocolo cadastrado!")
+        listar_protocolos()
+        limpar_campos_protocolo()
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao cadastrar: {e}")
+
+def excluir_protocolo():
+    selecionado = listbox_protocolos.curselection()
+    if not selecionado:
+        messagebox.showwarning("Atenção", "Selecione um protocolo para excluir.")
+        return
+    
+    item = listbox_protocolos.get(selecionado[0])
+    protocolo_id = item.split(" - ")[0]
+    
+    try:
+        protocolo = Protocolo.get_by_id(protocolo_id)
+        protocolo.delete_instance()
+        messagebox.showinfo("Sucesso", "Protocolo excluído!")
+        listar_protocolos()
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao excluir: {e}")
+
+def editar_protocolo():
+    global protocolo_editando
+    
+    if protocolo_editando is None:
+        messagebox.showwarning("Atenção", "Selecione um protocolo na lista para editar.")
+        return
+    
+    estudante_selecionado = combo_estudante.get()
+    tipo_selecionado = combo_tipo_protocolo.get()
+    justificativa = text_justificativa.get("1.0", tk.END).strip()
+    
+    if not estudante_selecionado or not tipo_selecionado or not justificativa:
+        messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
+        return
+    
+    try:
+        estudante_id = estudantes_dict[estudante_selecionado]
+        tipo_id = tipos_protocolo_dict[tipo_selecionado]
+        
+        protocolo_editando.estudante = estudante_id
+        protocolo_editando.tipo = tipo_id
+        protocolo_editando.justificativa = justificativa
+        protocolo_editando.save()
+        
+        messagebox.showinfo("Sucesso", "Protocolo editado!")
+        listar_protocolos()
+        limpar_campos_protocolo()
+        protocolo_editando = None  # Limpa a variável após editar
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao editar: {e}")
+
+def limpar_campos_protocolo():
+    global protocolo_editando
+    combo_estudante.set("")
+    combo_tipo_protocolo.set("")
+    text_justificativa.delete("1.0", tk.END)
+    protocolo_editando = None  # Limpa a variável de edição
+
+def carregar_protocolo_para_edicao():
+    global protocolo_editando
+    
+    selecionado = listbox_protocolos.curselection()
+    if not selecionado:
+        messagebox.showwarning("Atenção", "Selecione um protocolo na lista para carregar para edição.")
+        return
+    
+    item = listbox_protocolos.get(selecionado[0])
+    protocolo_id = item.split(" - ")[0]
+    
+    try:
+        protocolo = Protocolo.get_by_id(protocolo_id)
+        protocolo_editando = protocolo  # Armazena o protocolo sendo editado
+        
+        # Selecionar o estudante no combobox
+        estudante_texto = f"{protocolo.estudante.nome} - {protocolo.estudante.matricula}"
+        combo_estudante.set(estudante_texto)
+        
+        # Selecionar o tipo no combobox
+        combo_tipo_protocolo.set(protocolo.tipo.nome)
+        
+        # Preencher a justificativa
+        text_justificativa.delete("1.0", tk.END)
+        text_justificativa.insert("1.0", protocolo.justificativa)
+        
+        messagebox.showinfo("Sucesso", f"Protocolo ID {protocolo_id} carregado para edição!")
+        
+    except Exception as e:
+        protocolo_editando = None
+        messagebox.showerror("Erro", f"Erro ao carregar dados: {e}")
+
+# Remover o bind automático que causava o problema
+# listbox_protocolos.bind('<<ListboxSelect>>', preencher_campos_protocolo)
+
+# Botões
+btn_cadastrar_protocolo = tk.Button(frame_cad_protocolo, text="Cadastrar", command=cadastrar_protocolo)
+btn_cadastrar_protocolo.grid(row=5, column=0, pady=5, sticky="ew")
+btn_carregar_protocolo = tk.Button(frame_cad_protocolo, text="Carregar p/ Edição", command=carregar_protocolo_para_edicao)
+btn_carregar_protocolo.grid(row=5, column=1, pady=5, sticky="ew")
+btn_editar_protocolo = tk.Button(frame_cad_protocolo, text="Salvar Edição", command=editar_protocolo)
+btn_editar_protocolo.grid(row=6, column=0, pady=5, sticky="ew")
+btn_excluir_protocolo = tk.Button(frame_cad_protocolo, text="Excluir", command=excluir_protocolo)
+btn_excluir_protocolo.grid(row=6, column=1, pady=5, sticky="ew")
+btn_listar_protocolo = tk.Button(frame_cad_protocolo, text="Atualizar Lista", command=listar_protocolos)
+btn_listar_protocolo.grid(row=7, column=0, pady=5, sticky="ew")
+btn_limpar_protocolo = tk.Button(frame_cad_protocolo, text="Novo/Limpar", command=limpar_campos_protocolo)
+btn_limpar_protocolo.grid(row=7, column=1, pady=5, sticky="ew")
+
+# Função para mostrar status do que está sendo feito
+def mostrar_status_protocolo():
+    global protocolo_editando
+    if protocolo_editando:
+        messagebox.showinfo("Status", f"Editando protocolo ID: {protocolo_editando.id}\n"
+                                    f"Estudante: {protocolo_editando.estudante.nome}\n"
+                                    f"Tipo: {protocolo_editando.tipo.nome}")
+    else:
+        messagebox.showinfo("Status", "Modo: Cadastro de novo protocolo\n"
+                                    "Selecione um protocolo e clique em 'Carregar p/ Edição' para editar.")
+
+btn_status_protocolo = tk.Button(frame_cad_protocolo, text="Ver Status", command=mostrar_status_protocolo)
+btn_status_protocolo.grid(row=8, column=0, columnspan=2, pady=5, sticky="ew")
+
 # Coloca os frames na janela principal
 # Esses frames ficam todos sobrepostos na mesma posição
 # porque o tkraise irá escolher quem será exibido a cada vez
@@ -312,6 +526,7 @@ frame_inicio.grid(row=0,column=0,sticky="nesw")
 frame_sobre.grid(row=0,column=0,sticky="nesw")
 frame_cad_estudante.grid(row=0,column=0,sticky="nesw")
 frame_cad_tipo_protocolo.grid(row=0,column=0,sticky="nesw")
+frame_cad_protocolo.grid(row=0,column=0,sticky="nesw")
 
 
 # Define qual frame vai aparecer ao iniciar o programa principal
